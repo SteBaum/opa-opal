@@ -1,0 +1,83 @@
+#
+# Copyright 2026 The OKDP Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# you may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opa-trino.fullname" . }}
+  labels:
+    {{- include "opa-trino.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "opa-trino.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "opa-trino.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:
+      - name: opa
+        image: {{ .Values.image }}
+        {{- if .Values.env }}
+        env:
+          {{- toYaml .Values.env | nindent 10 }}
+        {{- end }}
+        args:
+          {{- toYaml .Values.opaArgs | nindent 10 }}
+        {{- with .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- if .Values.volumes }}
+        volumeMounts:
+          {{- if .Values.volumes.tlsVolume }}
+          - name: {{ .Values.volumes.tlsVolume.name }}
+            mountPath: {{ .Values.volumes.tlsVolume.mountPath }}
+            readOnly: true
+          {{- end }}
+          {{- if .Values.volumes.configVolume }}
+          - name: {{ .Values.volumes.configVolume.name }}
+            mountPath: {{ .Values.volumes.configVolume.mountPath }}
+            readOnly: true
+          {{- end }}
+        {{- end }}
+      {{- if .Values.volumes }}
+      volumes:
+        {{- if .Values.volumes.tlsVolume }}
+        - name: {{ .Values.volumes.tlsVolume.name }}
+          secret:
+            secretName: {{ .Values.volumes.tlsVolume.secretName }}
+        {{- end }}
+        {{- if .Values.volumes.configVolume }}
+        - name: {{ .Values.volumes.configVolume.name }}
+          configMap:
+            name: {{ .Values.volumes.configVolume.configMapName }}
+        {{- end }}
+      {{- end }}
