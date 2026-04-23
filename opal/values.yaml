@@ -1,0 +1,69 @@
+broadcastReplicas: 1
+client:
+  containerSecurityContext: {}
+  extraEnv:
+    OPAL_POLICY_STORE_URL: http://opa:443
+    OPAL_CLIENT_TOKEN: null
+    # For postgres integration as datasource
+    # OPAL_FETCH_PROVIDER_MODULES: opal_common.fetcher.providers,opal_fetcher_postgres.provider
+  opaPort: 8181
+  port: 7000
+  replicas: 1
+  securityContext: {}
+image:
+  client:
+    registry: docker.io
+    # Always use the standalone version
+    # Use image quay.io/okdp/opal-client-standalone and tag 0.9.4-1.0-postgres for postgres integration as datasource
+    repository: permitio/opal-client-standalone
+    tag: 0.9.4
+  pgsql:
+    registry: docker.io
+    repository: postgres
+    tag: alpine
+  server:
+    registry: docker.io
+    repository: permitio/opal-server
+    tag: 0.9.4
+openshift:
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+  enabled: false
+  securityContext:
+    fsGroup: 1010180000
+    runAsGroup: 1010180000
+    runAsUser: 1010180000
+postgresql:
+  containerSecurityContext: {}
+  extraEnv: {}
+  securityContext: {}
+server:
+  broadcastPgsql: true
+  broadcastUri: null
+  containerSecurityContext: {}
+  dataConfigSources:
+    config:
+      entries: []
+        # - url: "postgres://user:password@host:port/database"
+        #   config:
+        #     fetcher: "PostgresFetchProvider"
+        #     query: "SELECT * from table_permissions;"
+        #   topics:
+        #     - "policy_data"
+  extraEnv:
+    OPAL_AUTH_PRIVATE_KEY: null
+    OPAL_AUTH_PUBLIC_KEY: null
+    OPAL_AUTH_MASTER_TOKEN: null
+    # OPAL_POLICY_REPO_WEBHOOK_SECRET: null
+  policyRepoClonePath: null
+  policyRepoMainBranch: master
+  # If the policy repository is private set the ssh private key
+  policyRepoSshKey:
+  policyRepoUrl: https://github.com/OKDP/trino-opal-example-policy.git
+  # Set to 0 if webhook is used
+  pollingInterval: 30
+  port: 7002
+  replicas: 1
+  securityContext: {}
+  uvicornWorkers: 4
