@@ -1,0 +1,116 @@
+#
+# Copyright 2026 The OKDP Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# you may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+{{- $root := . }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "opal-secrets.fullname" . }}
+  labels:
+    {{- include "opal-secrets.labels" $root | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "opal-secrets.fullname" . }}
+
+      volumes:
+        - name: shared-ssh
+          emptyDir: {}
+        - name: shared-tokens
+          emptyDir: {}
+
+      containers:
+        - name: ssh-server
+          image: "{{ .Values.images.ssh_server }}"
+          command:
+            - sh
+            - -c
+            - |
+              ssh-keygen -t 'rsa' -b '4096' -f /mnt/id_rsa -N '' -m pem -q
+              chmod 644 /mnt/id_rsa
+              chmod 644 /mnt/id_rsa.pub
+          volumeMounts:
+            - name: shared-ssh
+              mountPath: /mnt
+
+        - name: opal-token-generator
+          image: "{{ .Values.images.opal_token_generator }}"
+          env:
+            - name: UVICORN_NUM_WORKERS
+              value: "1"
+          command:
+            - sh
+            - -c
+            - |
+              while [ ! -f /opal/ssh/id_rsa ]; do sleep 1; done
+              export OPAL_AUTH_PRIVATE_KEY="$(cat ssh/id_rsa)"
+              export OPAL_AUTH_PUBLIC_KEY="$(cat ssh/id_rsa.pub)"
+              export OPAL_AUTH_MASTER_TOKEN=$(opal-server generate-secret)
+              echo $OPAL_AUTH_MASTER_TOKEN > tokens/master-token.txt
+              start.sh &
+              SERVER_PID=$!
+              echo $(opal-server obtain-token $OPAL_AUTH_MASTER_TOKEN --type=client) > tokens/jwt.txt
+          ports:
+            - name: http
+              containerPort: 7002
+              protocol: TCP
+          volumeMounts:
+            - name: shared-ssh
+              mountPath: /opal/ssh
+              readOnly: true
+            - name: shared-tokens
+              mountPath: /opal/tokens
+        
+        - name: kubectl
+          image: "{{ .Values.images.kubectl }}"
+          env:
+            - name: SSH_SECRET_NAME
+              value: "{{ .Values.ssh_secret }}"
+            - name: MASTER_TOKEN_SECRET_NAME
+              value: "{{ .Values.master_token_secret }}"
+            - name: JWT_CLIENT_TOKEN
+              value: "{{ .Values.jwt_client_token_secret }}"
+          command:
+            - sh
+            - -c
+            - |
+              while [ ! -f /mnt/id_rsa ]; do sleep 1; done
+
+              kubectl create secret generic "$SSH_SECRET_NAME" \
+                --from-file=ssh-privatekey=/mnt/id_rsa \
+                --from-file=ssh-publickey=/mnt/id_rsa.pub \
+                --dry-run=client -o yaml | kubectl apply -f -
+
+              while [ ! -f /data/jwt.txt ]; do sleep 1; done
+
+              kubectl create secret generic "$MASTER_TOKEN_SECRET_NAME" \
+                --from-file=token=/data/master-token.txt \
+                --dry-run=client -o yaml | kubectl apply -f -
+
+              kubectl create secret generic "$JWT_CLIENT_TOKEN" \
+                --from-file=token=/data/jwt.txt \
+                --dry-run=client -o yaml | kubectl apply -f -
+
+          volumeMounts:
+            - name: shared-ssh
+              mountPath: /mnt
+              readOnly: true
+            - name: shared-tokens
+              mountPath: /data
+              readOnly: true

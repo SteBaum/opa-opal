@@ -1,0 +1,26 @@
+#
+# Copyright 2026 The OKDP Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+fullnameOverride: "opal-secrets-generator"
+
+images:
+  ssh_server: linuxserver/openssh-server:version-10.2_p1-r0
+  opal_token_generator: permitio/opal-server:0.9.4
+  kubectl: bitnami/kubectl@sha256:b349e60a6ae2969af84a778c0b976b050a0cc77f4fb6a4ad44307cd0a06e9d8f
+
+ssh_secret: opal-ssh-secret
+master_token_secret: opal-master-token-secret
+jwt_client_token_secret: opal-client-token-secret
