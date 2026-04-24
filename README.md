@@ -76,7 +76,7 @@ The values.yaml in the opal folder contains the standard configuration with a te
 3. Install Opal
 
     ```sh
-    helm install -n opa-ns -f opal/values.yaml opal permitio/opal \
+    helm install -n opa-ns -f opal/values.yaml --version 0.0.29 opal permitio/opal \
     --set server.extraEnv.OPAL_AUTH_PRIVATE_KEY="$OPAL_AUTH_PRIVATE_KEY" \
     --set server.extraEnv.OPAL_AUTH_PUBLIC_KEY="$OPAL_AUTH_PUBLIC_KEY" \
     --set server.extraEnv.OPAL_AUTH_MASTER_TOKEN="$OPAL_AUTH_MASTER_TOKEN" \
