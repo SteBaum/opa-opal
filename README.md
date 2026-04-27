@@ -7,7 +7,7 @@
 To deploy OPA with the helm chart:
 
 ```sh
-helm install --create-namespace -n opa-ns opa opa
+helm install --create-namespace -n opa-ns opa opa-server
 ```
 
 The chart will apply a deployment starting an OPA pod containing an OPA server.

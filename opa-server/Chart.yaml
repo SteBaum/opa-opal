@@ -15,7 +15,7 @@
 #
 
 apiVersion: v2
-name: opa-trino
+name: opa-server
 description: A Helm chart of OPA for Trino.
 type: application
 version: 0.1.0
