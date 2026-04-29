@@ -59,13 +59,13 @@ spec:
             - -c
             - |
               while [ ! -f /opal/ssh/id_rsa ]; do sleep 1; done
-              export OPAL_AUTH_PRIVATE_KEY="$(cat ssh/id_rsa)"
-              export OPAL_AUTH_PUBLIC_KEY="$(cat ssh/id_rsa.pub)"
+              export OPAL_AUTH_PRIVATE_KEY="$(cat /opal/ssh/id_rsa)"
+              export OPAL_AUTH_PUBLIC_KEY="$(cat /opal/ssh/id_rsa.pub)"
               export OPAL_AUTH_MASTER_TOKEN=$(opal-server generate-secret)
-              echo $OPAL_AUTH_MASTER_TOKEN > tokens/master-token.txt
+              echo $OPAL_AUTH_MASTER_TOKEN > /opal/tokens/master-token.txt
               start.sh &
-              SERVER_PID=$!
-              echo $(opal-server obtain-token $OPAL_AUTH_MASTER_TOKEN --type=client) > tokens/jwt.txt
+              until wget -qO- http://localhost:7002/healthcheck 2>/dev/null | grep -q ok; do sleep 2; done
+              echo $(opal-server obtain-token $OPAL_AUTH_MASTER_TOKEN --type=client) > /opal/tokens/jwt.txt
           ports:
             - name: http
               containerPort: 7002
