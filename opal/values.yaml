@@ -3,13 +3,14 @@ client:
   containerSecurityContext: {}
   extraEnv:
     OPAL_POLICY_STORE_URL: http://opa:443
-    OPAL_CLIENT_TOKEN: null
     # For postgres integration as datasource
     # OPAL_FETCH_PROVIDER_MODULES: opal_common.fetcher.providers,opal_fetcher_postgres.provider
   opaPort: 8181
   port: 7000
   replicas: 1
   securityContext: {}
+  secrets:
+    - opal-client-token-secret
 image:
   client:
     registry: docker.io
@@ -51,10 +52,10 @@ server:
         #     query: "SELECT * from table_permissions;"
         #   topics:
         #     - "policy_data"
-  extraEnv:
-    OPAL_AUTH_PRIVATE_KEY: null
-    OPAL_AUTH_PUBLIC_KEY: null
-    OPAL_AUTH_MASTER_TOKEN: null
+  secrets:
+    - opal-ssh-secret
+    - opal-master-token-secret
+  # extraEnv:
     # OPAL_POLICY_REPO_WEBHOOK_SECRET: null
   policyRepoClonePath: null
   policyRepoMainBranch: master

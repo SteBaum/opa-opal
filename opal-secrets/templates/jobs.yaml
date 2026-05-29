@@ -66,7 +66,8 @@ spec:
               echo $OPAL_AUTH_MASTER_TOKEN > /opal/tokens/master-token.txt
               start.sh &
               timeout 30 sh -c "until wget -qO- http://localhost:7002/healthcheck 2>/dev/null | grep -q ok; do sleep 2; done"
-              echo $(opal-server obtain-token $OPAL_AUTH_MASTER_TOKEN --type=client) > /opal/tokens/jwt.txt
+              echo $(opal-server obtain-token $OPAL_AUTH_MASTER_TOKEN --type=client) > /opal/tokens/jwt-not-trimmed.txt
+              tr -d '\n' < /opal/tokens/jwt-not-trimmed.txt > /opal/tokens/jwt.txt
           ports:
             - name: http
               containerPort: 7002
@@ -94,18 +95,18 @@ spec:
               while [ ! -f /mnt/id_rsa ]; do sleep 1; done
 
               kubectl create secret generic "$SSH_SECRET_NAME" \
-                --from-file=ssh-privatekey=/mnt/id_rsa \
-                --from-file=ssh-publickey=/mnt/id_rsa.pub \
+                --from-file=OPAL_AUTH_PRIVATE_KEY=/mnt/id_rsa \
+                --from-file=OPAL_AUTH_PUBLIC_KEY=/mnt/id_rsa.pub \
                 --dry-run=client -o yaml | kubectl apply -f -
 
               while [ ! -f /data/jwt.txt ]; do sleep 1; done
 
               kubectl create secret generic "$MASTER_TOKEN_SECRET_NAME" \
-                --from-file=token=/data/master-token.txt \
+                --from-file=OPAL_AUTH_MASTER_TOKEN=/data/master-token.txt \
                 --dry-run=client -o yaml | kubectl apply -f -
 
               kubectl create secret generic "$JWT_CLIENT_TOKEN" \
-                --from-file=token=/data/jwt.txt \
+                --from-file=OPAL_CLIENT_TOKEN=/data/jwt.txt \
                 --dry-run=client -o yaml | kubectl apply -f -
 
           volumeMounts:

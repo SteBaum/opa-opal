@@ -64,23 +64,8 @@ The values.yaml in the opal folder contains the standard configuration with a te
     helm repo update
     ```
 
-2. Set secrets as environment variables
+2. Install Opal
 
     ```sh
-    export OPAL_AUTH_PRIVATE_KEY=$(kubectl get secret opal-ssh-secret -n opa-ns -o jsonpath='{.data.ssh-privatekey}' | base64 -d)
-    export OPAL_AUTH_PUBLIC_KEY=$(kubectl get secret opal-ssh-secret -n opa-ns -o jsonpath='{.data.ssh-publickey}' | base64 -d)
-    export OPAL_AUTH_MASTER_TOKEN=$(kubectl get secret opal-master-token-secret -n opa-ns -o jsonpath='{.data.token}' | base64 -d)
-    export OPAL_CLIENT_TOKEN=$(kubectl get secret opal-client-token-secret -n opa-ns -o jsonpath='{.data.token}' | base64 -d)
+    helm install -n opa-ns -f opal/values.yaml --version 0.0.30 opal permitio/opal
     ```
-
-3. Install Opal
-
-    ```sh
-    helm install -n opa-ns -f opal/values.yaml --version 0.0.29 opal permitio/opal \
-    --set server.extraEnv.OPAL_AUTH_PRIVATE_KEY="$OPAL_AUTH_PRIVATE_KEY" \
-    --set server.extraEnv.OPAL_AUTH_PUBLIC_KEY="$OPAL_AUTH_PUBLIC_KEY" \
-    --set server.extraEnv.OPAL_AUTH_MASTER_TOKEN="$OPAL_AUTH_MASTER_TOKEN" \
-    --set client.extraEnv.OPAL_CLIENT_TOKEN="$OPAL_CLIENT_TOKEN"
-    ```
-
-    **Note**: set other variables not recommended to have in the values.yaml as mentioned in [Opal configuration](./README.md#opal-configuration) in the command.
