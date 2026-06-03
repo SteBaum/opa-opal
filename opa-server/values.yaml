@@ -85,7 +85,7 @@ certificate:
 # Can be used if an OPA bundle is located in SeaweedFS
 config:
   enabled: false
-  data : |
+  data: |
     services:
       seaweedfs:
         url: https://seaweedfs-seaweedfs-default.okdp.sandbox
